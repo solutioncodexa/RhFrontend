@@ -1,0 +1,439 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Inter, "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  --font-arabic: "Cairo", "Segoe UI", sans-serif;
+  --color-indigo-950: #1e1b4b;
+  --color-sidebar: #1e1b4b;
+  --color-sidebar-2: #312e81;
+  --color-accent: #7c3aed;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #f5f3ff;
+  color: #1e1b4b;
+}
+
+html[dir="rtl"] body {
+  font-family: var(--font-arabic);
+}
+
+/* Même chassis que le showcase : fond clair, encre noire, cartes blanches.
+   Seule la couleur d’accent change selon le rôle. */
+:root,
+[data-role="admin"] {
+  --shell-a: #0a0a0a;
+  --shell-b: #171717;
+  --role-bg: #f4f4f5;
+  --role-ink: #0a0a0a;
+  --role-muted: #6e2a72;
+  --role-accent: #6e2a72;
+  --role-accent-hover: #54105a;
+  --role-soft: #f3e8f3;
+  --role-line: #e5e5e5;
+  --role-card: #ffffff;
+  --role-on-accent: #ffffff;
+  --role-hero-a: #3d123f;
+  --role-hero-b: #6e2a72;
+}
+
+[data-role="manager"] {
+  --shell-a: #0a0a0a;
+  --shell-b: #171717;
+  --role-bg: #f4f4f5;
+  --role-ink: #0a0a0a;
+  --role-muted: #0f766e;
+  --role-accent: #0f766e;
+  --role-accent-hover: #115e59;
+  --role-soft: #ccfbf1;
+  --role-line: #e5e5e5;
+  --role-card: #ffffff;
+  --role-on-accent: #ffffff;
+  --role-hero-a: #042f2e;
+  --role-hero-b: #0f766e;
+}
+
+[data-role="employee"] {
+  --shell-a: #0a0a0a;
+  --shell-b: #171717;
+  --role-bg: #f4f4f5;
+  --role-ink: #0a0a0a;
+  --role-muted: #c2410c;
+  --role-accent: #c2410c;
+  --role-accent-hover: #9a3412;
+  --role-soft: #ffedd5;
+  --role-line: #e5e5e5;
+  --role-card: #ffffff;
+  --role-on-accent: #ffffff;
+  --role-hero-a: #7c2d12;
+  --role-hero-b: #c2410c;
+}
+
+[data-role="superadmin"] {
+  --shell-a: #0a0a0a;
+  --shell-b: #171717;
+  --role-bg: #f4f4f5;
+  --role-ink: #0a0a0a;
+  --role-muted: #1d4ed8;
+  --role-accent: #1d4ed8;
+  --role-accent-hover: #1e3a8a;
+  --role-soft: #dbeafe;
+  --role-line: #e5e5e5;
+  --role-card: #ffffff;
+  --role-on-accent: #ffffff;
+  --role-hero-a: #172554;
+  --role-hero-b: #1d4ed8;
+}
+
+[data-role] {
+  background: var(--role-bg);
+  color: var(--role-ink);
+}
+
+.role-hero {
+  background:
+    radial-gradient(420px 180px at 100% 0%, rgb(255 255 255 / 0.22), transparent 58%),
+    linear-gradient(135deg, var(--role-hero-a), var(--role-hero-b));
+  color: #fff;
+}
+
+.role-hero .text-indigo-100,
+.role-hero .text-indigo-200 {
+  color: rgb(255 255 255 / 0.78);
+}
+
+[data-role] .text-indigo-950,
+[data-role] .text-indigo-900 {
+  color: var(--role-ink);
+}
+[data-role] .text-indigo-800,
+[data-role] .text-indigo-700,
+[data-role] .text-violet-700,
+[data-role] .text-violet-900 {
+  color: var(--role-muted);
+}
+[data-role] .text-indigo-500,
+[data-role] .text-indigo-400,
+[data-role] .text-indigo-300,
+[data-role] [class*="text-indigo-900/"],
+[data-role] [class*="text-indigo-800/"] {
+  color: #525252;
+}
+[data-role] .bg-indigo-100,
+[data-role] .bg-indigo-50,
+[data-role] .bg-indigo-50\/40,
+[data-role] .bg-indigo-50\/70,
+[data-role] .bg-violet-50,
+[data-role] .bg-violet-100 {
+  background-color: var(--role-soft);
+}
+[data-role] .border-indigo-50,
+[data-role] .border-indigo-100,
+[data-role] .border-indigo-200,
+[data-role] .border-violet-300 {
+  border-color: var(--role-line);
+}
+[data-role] .bg-indigo-600,
+[data-role] .bg-violet-600 {
+  background-color: var(--role-accent);
+}
+[data-role] .bg-white {
+  background-color: var(--role-card);
+}
+[data-role] thead {
+  background-color: var(--role-soft);
+  color: var(--role-ink);
+}
+
+th {
+  text-align: start;
+}
+
+.shell-rail,
+.shell-drawer {
+  background: linear-gradient(to bottom, var(--shell-a), var(--shell-b));
+  color: #f5f5f5;
+}
+
+.shell-scrim {
+  background: color-mix(in srgb, var(--shell-a) 55%, transparent);
+}
+
+/* Tablette 768–1024 : barre d’icônes, comme le chef Smil. Le salarié garde le menu bas. */
+@media (min-width: 768px) and (max-width: 1024px) {
+  [data-role="admin"] .shell-rail,
+  [data-role="manager"] .shell-rail,
+  [data-role="superadmin"] .shell-rail {
+    width: 4.5rem;
+  }
+  [data-role="admin"] .shell-rail .shell-label,
+  [data-role="manager"] .shell-rail .shell-label,
+  [data-role="superadmin"] .shell-rail .shell-label,
+  [data-role="admin"] .shell-rail .shell-group,
+  [data-role="manager"] .shell-rail .shell-group,
+  [data-role="superadmin"] .shell-rail .shell-group,
+  [data-role="admin"] .shell-rail .shell-footer-text,
+  [data-role="manager"] .shell-rail .shell-footer-text,
+  [data-role="superadmin"] .shell-rail .shell-footer-text {
+    display: none;
+  }
+  [data-role="admin"] .shell-rail .shell-link,
+  [data-role="manager"] .shell-rail .shell-link,
+  [data-role="superadmin"] .shell-rail .shell-link {
+    justify-content: center;
+    padding-inline: 0;
+  }
+}
+
+.auth-grid {
+  background:
+    radial-gradient(800px 320px at 100% 0%, rgb(110 42 114 / 0.14), transparent 55%),
+    #f4f4f5;
+}
+
+.hero-mesh {
+  background:
+    radial-gradient(900px 420px at 80% -10%, rgb(139 92 246 / 0.45), transparent 50%),
+    radial-gradient(700px 380px at 0% 20%, rgb(79 70 229 / 0.4), transparent 50%),
+    linear-gradient(165deg, #1e1b4b, #312e81 55%, #4c1d95);
+}
+
+.landing-jkt {
+  font-family: Inter, "Plus Jakarta Sans", sans-serif;
+  background: #fff;
+  color: #0a0a0a;
+}
+
+html[dir="rtl"] .landing-jkt {
+  font-family: Cairo, "Segoe UI", sans-serif;
+}
+
+.landing-jkt h1,
+.landing-jkt h2,
+.landing-jkt h3 {
+  letter-spacing: -0.025em;
+}
+
+.landing-grid {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at 70% 30%, black 20%, transparent 72%);
+}
+
+.control-field {
+  border-color: var(--role-line);
+}
+
+.control-field:focus {
+  border-color: var(--role-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--role-accent) 16%, transparent);
+}
+
+.card-shadow {
+  box-shadow: 0 1px 2px rgb(10 10 10 / 0.04), 0 16px 36px -22px rgb(10 10 10 / 0.22);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 99px;
+}
+
+@keyframes dash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dash-ring {
+  from {
+    stroke-dashoffset: var(--ring-length);
+  }
+}
+
+@keyframes dash-bar {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes dash-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes dash-donut {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.dash-rise {
+  animation: dash-rise 0.55s ease;
+}
+
+.dash-ring {
+  animation: dash-ring 1s ease both;
+}
+
+.dash-bar {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: dash-bar 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dash-grow {
+  transform-origin: left center;
+  animation: dash-grow 0.75s ease both;
+}
+
+.dash-donut {
+  transform-origin: center;
+  animation: dash-donut 0.6s ease both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.overlay-in {
+  animation: overlay-in 0.22s ease both;
+}
+
+.modal-in {
+  animation: modal-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.auth-card {
+  animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fade-up {
+  animation: fade-up 0.5s ease;
+}
+
+.shake {
+  animation: shake 0.28s ease;
+}
+
+.stagger > * {
+  animation: fade-up 0.45s ease;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.14s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.18s;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 0.22s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-rise,
+  .dash-ring,
+  .dash-bar,
+  .dash-grow,
+  .dash-donut,
+  .page-enter,
+  .overlay-in,
+  .modal-in,
+  .auth-card,
+  .fade-up,
+  .shake,
+  .stagger > * {
+    animation: none !important;
+  }
+}
