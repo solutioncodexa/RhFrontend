@@ -7,6 +7,7 @@ import { apiFetch, listResource } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { Spinner } from "./ui";
 
 type Note = {
   id?: string | number;
@@ -182,8 +183,11 @@ export function NotificationBell({ mode }: { mode: "app" | "portal" }) {
                 {count > 0 ? (
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-violet-700 hover:underline"
-                    onClick={() => markAll.mutate()}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-violet-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={markAll.isPending}
+                    onClick={() => {
+                      if (!markAll.isPending) void markAll.mutateAsync();
+                    }}
                   >
                     <CheckCheck className="h-3.5 w-3.5" />
                     {lang === "ar" ? "تعليم الكل كمقروء" : "Tout marquer lu"}
@@ -192,7 +196,7 @@ export function NotificationBell({ mode }: { mode: "app" | "portal" }) {
               </div>
               <ul className="max-h-80 overflow-y-auto">
                 {list.isLoading ? (
-                  <li className="px-4 py-8 text-center text-sm text-indigo-400">{t("loading")}</li>
+                  <li className="px-4 py-3"><Spinner variant="rows" rows={3} /></li>
                 ) : items.length === 0 ? (
                   <li className="px-4 py-8 text-center text-sm text-indigo-400">
                     {lang === "ar" ? "لا توجد إشعارات" : "Aucune notification"}
@@ -207,8 +211,10 @@ export function NotificationBell({ mode }: { mode: "app" | "portal" }) {
                         <button
                           type="button"
                           className="w-full text-start"
+                          disabled={markOne.isPending}
                           onClick={() => {
-                            if (unreadItem && id) markOne.mutate(id);
+                            if (markOne.isPending) return;
+                            if (unreadItem && id) void markOne.mutateAsync(id);
                             setOpen(false);
                             if (to) navigate(to);
                           }}

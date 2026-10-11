@@ -421,6 +421,164 @@ html[dir="rtl"] .landing-jkt {
   animation-delay: 0.22s;
 }
 
+[data-sonner-toaster] {
+  --width: 22.5rem;
+  --border-radius: 16px;
+  --normal-bg: #ffffff;
+  --normal-border: var(--role-line);
+  --normal-text: var(--role-ink);
+  font-family: inherit !important;
+}
+
+[data-sonner-toaster][dir="ltr"],
+[data-sonner-toaster][dir="rtl"] {
+  --toast-close-button-transform: none;
+}
+
+[data-sonner-toast][data-styled="true"],
+[data-rich-colors="true"][data-sonner-toast][data-styled="true"] {
+  align-items: center;
+  gap: 12px;
+  padding: 14px 42px 14px 16px;
+  border-radius: 16px;
+  background: #ffffff !important;
+  border: 1px solid var(--role-line) !important;
+  color: var(--role-ink) !important;
+  box-shadow: 0 1px 2px rgb(10 10 10 / 0.04), 0 18px 40px -18px rgb(10 10 10 / 0.28);
+}
+
+html[dir="rtl"] [data-sonner-toast][data-styled="true"] {
+  padding: 14px 16px 14px 42px;
+}
+
+[data-sonner-toast][data-styled="true"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 8px;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--role-accent);
+}
+
+[data-sonner-toast][data-type="success"][data-styled="true"]::before {
+  background: #059669;
+}
+
+[data-sonner-toast][data-type="error"][data-styled="true"]::before {
+  background: #e11d48;
+}
+
+[data-sonner-toast][data-type="warning"][data-styled="true"]::before {
+  background: #d97706;
+}
+
+[data-sonner-toast][data-type="info"][data-styled="true"]::before {
+  background: #1d4ed8;
+}
+
+[data-sonner-toast][data-type="loading"][data-styled="true"]::before {
+  background: var(--role-accent);
+}
+
+[data-sonner-toast][data-styled="true"] [data-icon] {
+  width: 32px;
+  height: 32px;
+  margin: 0 0 0 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--role-soft);
+  color: var(--role-accent);
+}
+
+html[dir="rtl"] [data-sonner-toast][data-styled="true"] [data-icon] {
+  margin: 0 8px 0 0;
+}
+
+[data-sonner-toast][data-type="success"][data-styled="true"] [data-icon] {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+[data-sonner-toast][data-type="error"][data-styled="true"] [data-icon] {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+[data-sonner-toast][data-type="warning"][data-styled="true"] [data-icon] {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+[data-sonner-toast][data-type="info"][data-styled="true"] [data-icon] {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+[data-sonner-toast][data-type="loading"][data-styled="true"] [data-icon] {
+  background: var(--role-soft);
+  color: var(--role-accent);
+}
+
+[data-sonner-toast][data-styled="true"] [data-icon] svg {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+[data-sonner-toast][data-styled="true"] [data-title] {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--role-ink) !important;
+}
+
+[data-sonner-toast][data-styled="true"] [data-description] {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #525252 !important;
+}
+
+[data-sonner-toast][data-styled="true"] [data-close-button],
+[data-rich-colors="true"][data-sonner-toast][data-styled="true"] [data-close-button] {
+  top: 50% !important;
+  left: auto !important;
+  right: 10px !important;
+  width: 26px;
+  height: 26px;
+  transform: translateY(-50%) !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #737373 !important;
+}
+
+html[dir="rtl"] [data-sonner-toast][data-styled="true"] [data-close-button] {
+  right: auto !important;
+  left: 10px !important;
+}
+
+[data-sonner-toast][data-styled="true"] [data-close-button]:hover,
+[data-sonner-toast][data-styled="true"]:hover [data-close-button]:hover {
+  background: var(--role-soft);
+  border-color: transparent;
+  color: var(--role-ink);
+}
+
+.skeleton {
+  background-image: linear-gradient(90deg, #ececef 0%, #f7f7f8 42%, #ececef 84%);
+  background-size: 220% 100%;
+  animation: rh-shimmer 1.35s ease-in-out infinite;
+}
+
+@keyframes rh-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -120% 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dash-rise,
   .dash-ring,
@@ -433,7 +591,8 @@ html[dir="rtl"] .landing-jkt {
   .auth-card,
   .fade-up,
   .shake,
-  .stagger > * {
+  .stagger > *,
+  .skeleton {
     animation: none !important;
   }
 }

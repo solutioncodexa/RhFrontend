@@ -22,7 +22,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { apiFetch } from "@/lib/api";
 import { Button, Card, Input } from "./ui";
 import { cn } from "@/lib/utils";
@@ -526,10 +526,10 @@ function ChatShell({
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
                         size="sm"
+                        loading={chat.confirm.isPending}
                         disabled={chat.confirm.isPending}
-                        onClick={() => chat.confirm.mutate(m.confirmation!.actionId)}
+                        onClick={() => chat.confirm.mutateAsync(m.confirmation!.actionId)}
                       >
-                        {chat.confirm.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                         Confirmer
                       </Button>
                       <Button

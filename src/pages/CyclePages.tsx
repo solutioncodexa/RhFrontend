@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { apiFetch, listResource } from "@/lib/api";
 import { asRecord, fullName, idOf, moneyMAD } from "@/lib/utils";
 import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, PageHeader, Spinner } from "@/components/ui";
@@ -69,13 +69,13 @@ export function ProfileChangesPage({ portal = false }: { portal?: boolean }) {
             <Input value={value} onChange={(e) => setValue(e.target.value)} />
           </Field>
           <div className="flex items-end">
-            <Button onClick={() => propose.mutate()} disabled={propose.isPending || !value.trim()}>
+            <Button onClick={() => propose.mutateAsync()} loading={propose.isPending} disabled={propose.isPending || !value.trim()}>
               Proposer
             </Button>
           </div>
         </div>
       </Card>
-      {rows.isLoading ? <Spinner /> : null}
+      {rows.isLoading ? <Spinner variant="cards" /> : null}
       {rows.isError ? <ErrorState message={(rows.error as Error).message} onRetry={() => rows.refetch()} /> : null}
       <div className="space-y-2">
         {list.map((row) => (
@@ -91,8 +91,8 @@ export function ProfileChangesPage({ portal = false }: { portal?: boolean }) {
             </div>
             {hr && String(row.status) === "PENDING" ? (
               <div className="mt-3 flex gap-2">
-                <Button size="sm" onClick={() => decide.mutate({ id: String(row.id), status: "APPROVED" })}>Accepter</Button>
-                <Button size="sm" variant="outline" onClick={() => decide.mutate({ id: String(row.id), status: "REJECTED" })}>Refuser</Button>
+                <Button size="sm" loading={decide.isPending} disabled={decide.isPending} onClick={() => decide.mutateAsync({ id: String(row.id), status: "APPROVED" })}>Accepter</Button>
+                <Button size="sm" variant="outline" disabled={decide.isPending} onClick={() => decide.mutateAsync({ id: String(row.id), status: "REJECTED" })}>Refuser</Button>
               </div>
             ) : null}
           </Card>
@@ -124,7 +124,7 @@ export function OrgChartPage() {
   return (
     <div>
       <PageHeader title="Organigramme" subtitle="Hiérarchie lue depuis le manager de chaque fiche." />
-      {people.isLoading ? <Spinner /> : null}
+      {people.isLoading ? <Spinner variant="rows" rows={6} /> : null}
       {people.isError ? <ErrorState message={(people.error as Error).message} onRetry={() => people.refetch()} /> : null}
       <div className="space-y-3">
         {roots.map((row) => (
@@ -229,7 +229,7 @@ export function TrainingPage() {
             <Field label="Heures"><Input value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} /></Field>
             <Field label="Coût MAD"><Input value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} /></Field>
           </div>
-          <Button className="mt-3" onClick={() => create.mutate()} disabled={!form.title.trim()}>Ajouter au catalogue</Button>
+          <Button className="mt-3" loading={create.isPending} onClick={() => create.mutateAsync()} disabled={create.isPending || !form.title.trim()}>Ajouter au catalogue</Button>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <Field label="Formation">
               <SearchableSelect
@@ -250,12 +250,12 @@ export function TrainingPage() {
               />
             </Field>
             <div className="flex items-end">
-              <Button variant="outline" onClick={() => enrollMut.mutate()} disabled={!enroll.courseId || !enroll.employeeId}>Inscrire</Button>
+              <Button variant="outline" loading={enrollMut.isPending} onClick={() => enrollMut.mutateAsync()} disabled={enrollMut.isPending || !enroll.courseId || !enroll.employeeId}>Inscrire</Button>
             </div>
           </div>
         </Card>
       ) : null}
-      {data.isLoading ? <Spinner /> : null}
+      {data.isLoading ? <Spinner variant="cards" /> : null}
       {data.isError ? <ErrorState message={(data.error as Error).message} onRetry={() => data.refetch()} /> : null}
       <div className="space-y-2">
         {enrollments.map((row) => (
@@ -268,7 +268,7 @@ export function TrainingPage() {
               <div className="flex items-center gap-2">
                 <Badge>{String(row.status ?? "")}</Badge>
                 {canEdit && String(row.status) !== "DONE" ? (
-                  <Button size="sm" variant="outline" onClick={() => done.mutate(String(row.id))}>Marquer faite</Button>
+                  <Button size="sm" variant="outline" loading={done.isPending} disabled={done.isPending} onClick={() => done.mutateAsync(String(row.id))}>Marquer faite</Button>
                 ) : null}
               </div>
             </div>

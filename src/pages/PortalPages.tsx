@@ -2,10 +2,10 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DonutChart, TrendChart, useCountUp } from "@/components/DashboardCharts";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { apiFetch, uploadImage } from "@/lib/api";
 import { asRecord, moneyMAD } from "@/lib/utils";
-import { Button, Card, PageHeader } from "@/components/ui";
+import { Button, Card, PageHeader, Spinner } from "@/components/ui";
 import { ImageWell } from "@/components/ImageWell";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -80,6 +80,9 @@ export function PortalHome() {
           }}
         />
       ) : null}
+      {dash.isLoading ? <Spinner variant="portal" /> : null}
+      {dash.data ? (
+      <>
       <div className="grid grid-cols-2 gap-3">
         <PortalStat label={tr("Solde annuel")} value={Number.isFinite(leave) ? leave.toFixed(leave % 1 ? 1 : 0) : "—"} />
         <PortalStat label={tr("Dernier net")} value={d.lastNet != null ? moneyMAD(Number(d.lastNet)) : "—"} />
@@ -92,6 +95,8 @@ export function PortalHome() {
         <h2 className="mb-3 font-semibold text-indigo-950">{tr("14 derniers jours")}</h2>
         <TrendChart points={points} />
       </Card>
+      </>
+      ) : null}
       <div className="grid gap-2">
         {[
           ["/portal/leave", "Déposer un congé"],

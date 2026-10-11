@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type Dispatch, type FormEvent, type ReactNode, type SetStateAction } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Download, Eye, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { ColumnFilter } from "./ColumnFilter";
 import {
@@ -400,7 +400,9 @@ export function ResourcePage({ config, canWrite = true }: { config: ResourceConf
     },
     onSuccess: (created) => {
       const wasEdit = Boolean(editing);
-      toast.success(wasEdit ? "Enregistré" : "Créé");
+      toast.success(wasEdit ? "Enregistré" : "Créé", {
+        description: wasEdit ? "Les modifications sont prises en compte." : "L’élément a été ajouté.",
+      });
       setOpen(false);
       setEditing(null);
       setFile(null);
@@ -415,7 +417,7 @@ export function ResourcePage({ config, canWrite = true }: { config: ResourceConf
   const remove = useMutation({
     mutationFn: () => deleteResource(config.path, idOf(toDelete!)),
     onSuccess: () => {
-      toast.success("Supprimé");
+      toast.success("Supprimé", { description: "L’élément a été retiré." });
       setToDelete(null);
       qc.invalidateQueries({ queryKey: [config.queryKey] });
     },
@@ -508,7 +510,7 @@ export function ResourcePage({ config, canWrite = true }: { config: ResourceConf
                 onClick={() => {
                   const year = new Date().getFullYear();
                   const joiner = item.path.includes("?") ? "&" : "?";
-                  downloadNamed(`${item.path}${joiner}year=${year}`, item.filename).catch((e: Error) => toast.error(e.message));
+                  return downloadNamed(`${item.path}${joiner}year=${year}`, item.filename).catch((e: Error) => toast.error(e.message));
                 }}
               >
                 {item.label}
@@ -525,6 +527,12 @@ export function ResourcePage({ config, canWrite = true }: { config: ResourceConf
       />
 
       {list.isLoading && !list.data ? <Spinner /> : null}
+      {list.isFetching && list.data ? (
+        <p className="mb-2 flex items-center gap-2 text-xs font-medium text-indigo-600" role="status">
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+          {tr("Mise à jour…")}
+        </p>
+      ) : null}
       {list.isError ? (
         <ErrorState message={(list.error as Error).message} onRetry={() => list.refetch()} />
       ) : null}
@@ -667,7 +675,7 @@ export function ResourcePage({ config, canWrite = true }: { config: ResourceConf
                             const name = path.endsWith("/pdf")
                               ? `document-${idOf(row)}.pdf`
                               : String(row.originalName ?? row.name ?? "document");
-                            downloadNamed(path, name).catch((e: Error) => toast.error(e.message));
+                            return downloadNamed(path, name).catch((e: Error) => toast.error(e.message));
                           }}
                         >
                           <Download className="h-4 w-4" />
@@ -717,10 +725,10 @@ export function ResourcePage({ config, canWrite = true }: { config: ResourceConf
         onClose={() => setOpen(false)}
         footer={
           <>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={save.isPending}>
               {t("cancel")}
             </Button>
-            <Button disabled={save.isPending} onClick={() => save.mutate()}>
+            <Button loading={save.isPending} disabled={save.isPending} onClick={() => save.mutateAsync()}>
               {t("save")}
             </Button>
           </>
@@ -730,7 +738,7 @@ export function ResourcePage({ config, canWrite = true }: { config: ResourceConf
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e: FormEvent) => {
             e.preventDefault();
-            save.mutate();
+            if (!save.isPending) void save.mutateAsync().catch(() => undefined);
           }}
         >
           {formFields(config, selfId).map((f) => (
@@ -797,7 +805,8 @@ export function ResourcePage({ config, canWrite = true }: { config: ResourceConf
         message="Cette action est définitive. Confirmer la suppression ?"
         danger
         onClose={() => setToDelete(null)}
-        onConfirm={() => remove.mutate()}
+        pending={remove.isPending}
+        onConfirm={() => remove.mutateAsync()}
       />
     </div>
   );

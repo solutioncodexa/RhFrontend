@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Download, Eye } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { apiFetch, apiFetchBlob, createResource, downloadNamed, listResource } from "@/lib/api";
 import { asRecord, fullName, idOf, moneyMAD, scrollContentTop } from "@/lib/utils";
 import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, PageHeader, Spinner, statusTone } from "@/components/ui";
@@ -158,10 +158,10 @@ export function PayrollPage() {
         subtitle="CNSS plafonnée, AMO, IR, prime d’ancienneté — montants en MAD"
         actions={canEdit ? <Button onClick={() => setOpen(true)}>Ouvrir un mois</Button> : null}
       />
-      {periods.isLoading ? <Spinner /> : null}
+      {periods.isLoading ? <Spinner variant="cards" /> : null}
       {periods.isError ? <ErrorState message={(periods.error as Error).message} onRetry={() => periods.refetch()} /> : null}
       <div className="grid gap-3 md:grid-cols-3">
-        {(periods.data?.content ?? []).map((p) => (
+        {(periods.isLoading ? [] : periods.data?.content ?? []).map((p) => (
           <button key={idOf(p)} onClick={() => setSelected(idOf(p))} className="text-start">
             <Card className={selected === idOf(p) ? "ring-2 ring-violet-500" : ""}>
               <p className="font-bold">
@@ -172,7 +172,7 @@ export function PayrollPage() {
           </button>
         ))}
       </div>
-      {periods.data?.content.length === 0 ? <EmptyState title="Aucune période" hint="Ouvrez un mois pour calculer la paie." /> : null}
+      {periods.data && periods.data.content.length === 0 ? <EmptyState title="Aucune période" hint="Ouvrez un mois pour calculer la paie." /> : null}
 
       {selected ? (
         <Card className="mt-6">
@@ -208,22 +208,22 @@ export function PayrollPage() {
           ) : null}
           <div className="mb-4 flex flex-wrap gap-2">
             {canEdit ? (
-              <Button onClick={() => calculate.mutate()} disabled={calculate.isPending}>
+              <Button onClick={() => calculate.mutateAsync()} loading={calculate.isPending} disabled={calculate.isPending || approve.isPending || paid.isPending || lock.isPending}>
                 Calculer
               </Button>
             ) : null}
             {canEdit && String(d.status) === "CALCULATED" ? (
-              <Button variant="outline" onClick={() => approve.mutate()}>
+              <Button variant="outline" onClick={() => approve.mutateAsync()} loading={approve.isPending} disabled={calculate.isPending || approve.isPending || paid.isPending || lock.isPending}>
                 Approuver
               </Button>
             ) : null}
             {canEdit && String(d.status) === "APPROVED" ? (
-              <Button variant="outline" onClick={() => paid.mutate()}>
+              <Button variant="outline" onClick={() => paid.mutateAsync()} loading={paid.isPending} disabled={calculate.isPending || approve.isPending || paid.isPending || lock.isPending}>
                 Marquer payé
               </Button>
             ) : null}
             {canEdit && String(d.status) !== "LOCKED" ? (
-              <Button variant="outline" onClick={() => lock.mutate()}>
+              <Button variant="outline" onClick={() => lock.mutateAsync()} loading={lock.isPending} disabled={calculate.isPending || approve.isPending || paid.isPending || lock.isPending}>
                 Verrouiller et envoyer les bulletins
               </Button>
             ) : null}
@@ -262,11 +262,11 @@ export function PayrollPage() {
                 <Input value={credit.reason} onChange={(e) => setCredit({ ...credit, reason: e.target.value })} />
               </Field>
               <div className="flex items-end">
-                <Button variant="outline" onClick={() => creditMut.mutate()}>Enregistrer l’avoir</Button>
+                <Button variant="outline" loading={creditMut.isPending} disabled={creditMut.isPending || !credit.employeeId} onClick={() => creditMut.mutateAsync()}>Enregistrer l’avoir</Button>
               </div>
             </div>
           ) : null}
-          {detail.isLoading ? <Spinner /> : null}
+          {detail.isLoading ? <Spinner variant="rows" /> : null}
           <div className="mb-4 rounded-xl border border-indigo-100 p-3">
             <p className="mb-2 font-semibold">Primes, indemnités et absences du salarié</p>
             {canEdit ? (
@@ -295,7 +295,7 @@ export function PayrollPage() {
                   <Input value={item.amount} onChange={(e) => setItem({ ...item, amount: e.target.value })} />
                 </Field>
                 <div className="flex items-end">
-                  <Button variant="outline" onClick={() => addItem.mutate()} disabled={!item.employeeId || !item.label.trim() || !item.amount}>Lier au bulletin</Button>
+                  <Button variant="outline" loading={addItem.isPending} onClick={() => addItem.mutateAsync()} disabled={addItem.isPending || !item.employeeId || !item.label.trim() || !item.amount}>Lier au bulletin</Button>
                 </div>
               </div>
             ) : null}
@@ -309,7 +309,7 @@ export function PayrollPage() {
               {((elements.data?.items as Record<string, unknown>[] | undefined) ?? []).map((row) => (
                 <li key={String(row.id)} className="flex items-center justify-between gap-2">
                   <span>{fullName(asRecord(row.employee))} · {String(row.label)} · {moneyMAD(Number(row.amount ?? 0))}</span>
-                  {canEdit ? <Button size="sm" variant="ghost" onClick={() => removeItem.mutate(String(row.id))}>Retirer</Button> : null}
+                  {canEdit ? <Button size="sm" variant="ghost" loading={removeItem.isPending && String(removeItem.variables ?? "") === String(row.id)} disabled={removeItem.isPending} onClick={() => removeItem.mutateAsync(String(row.id))}>Retirer</Button> : null}
                 </li>
               ))}
             </ul>
@@ -373,7 +373,7 @@ export function PayrollPage() {
         open={open}
         title="Nouvelle période"
         onClose={() => setOpen(false)}
-        footer={<Button onClick={() => create.mutate()}>Créer</Button>}
+        footer={<Button loading={create.isPending} disabled={create.isPending} onClick={() => create.mutateAsync()}>Créer</Button>}
       >
         <div className="grid grid-cols-2 gap-3">
           <Field label="Année">
@@ -815,8 +815,8 @@ export function PayslipsPage() {
             </dl>
             <div className="relative h-80 overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50">
               {opening ? (
-                <div className="absolute inset-0 grid place-items-center">
-                  <Spinner />
+                <div className="absolute inset-0">
+                  <Spinner variant="block" />
                 </div>
               ) : null}
               {pdfUrl ? (

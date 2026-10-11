@@ -9,7 +9,7 @@ import { normalizeRole, type AuthUser } from "@/lib/types";
 import { cn, fullName, scrollContentTop } from "@/lib/utils";
 import { GlobalSearch } from "./GlobalSearch";
 import { NotificationBell } from "./NotificationBell";
-import { Button } from "./ui";
+import { Button, ShellSkeleton } from "./ui";
 import { AssistantProvider, AssistantTrigger } from "./AssistantPanel";
 
 export function AppShell({ mode }: { mode: "app" | "portal" | "platform" }) {
@@ -63,9 +63,7 @@ export function AppShell({ mode }: { mode: "app" | "portal" | "platform" }) {
 
   if (loading || !user) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#f4f4f5] text-[#0a0a0a]">
-        Chargement de la session…
-      </div>
+      <ShellSkeleton />
     );
   }
 

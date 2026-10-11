@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Download, FilePlus2, Paperclip } from "lucide-react";
 import { apiFetch, downloadNamed, getResource, listResource, updateResource, uploadDocument, uploadImage } from "@/lib/api";
 import { compressImage } from "@/lib/images";
@@ -53,6 +53,7 @@ export function EmployeeFilePage() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState("");
+  const [paying, setPaying] = useState("");
   const [reference, setReference] = useState("");
   const [coverage, setCoverage] = useState({
     cnssNumber: "",
@@ -173,6 +174,8 @@ export function EmployeeFilePage() {
   }
 
   async function markPaid(payslipId: string) {
+    if (paying) return;
+    setPaying(payslipId);
     try {
       await apiFetch(`/payslips/${payslipId}/transfer`, {
         method: "POST",
@@ -183,10 +186,12 @@ export function EmployeeFilePage() {
       qc.invalidateQueries({ queryKey: ["employee-payslips", id] });
     } catch (e) {
       toast.error((e as Error).message);
+    } finally {
+      setPaying("");
     }
   }
 
-  if (employee.isLoading) return <Spinner />;
+  if (employee.isLoading) return <Spinner variant="profile" />;
   if (employee.isError) return <ErrorState message={(employee.error as Error).message} onRetry={() => employee.refetch()} />;
   const row = employee.data;
   if (!row) return <EmptyState title="Employé introuvable" />;
@@ -268,7 +273,7 @@ export function EmployeeFilePage() {
           </Card>
           <Card>
             <h2 className="mb-3 font-semibold">{tr("Contrat")}</h2>
-            {contracts.data?.content.length ? (
+            {contracts.isLoading ? <Spinner variant="rows" /> : contracts.data?.content.length ? (
               <ul className="space-y-3">
                 {contracts.data.content.map((contract) => (
                   <li key={idOf(contract)} className="rounded-xl border border-[var(--role-line)] p-3 text-sm">
@@ -310,7 +315,7 @@ export function EmployeeFilePage() {
             <Field label="N° de police"><Input value={coverage.insurerPolicy} disabled={!canEdit} onChange={(e) => setCoverage({ ...coverage, insurerPolicy: e.target.value })} /></Field>
             <Field label="Date d’effet"><Input type="date" value={coverage.insurerStart} disabled={!canEdit} onChange={(e) => setCoverage({ ...coverage, insurerStart: e.target.value })} /></Field>
           </div>
-          {canEdit ? <Button onClick={saveCoverage} disabled={saving}>{saving ? "Envoi…" : "Enregistrer la couverture"}</Button> : null}
+          {canEdit ? <Button onClick={() => saveCoverage()} loading={saving} disabled={saving}>{saving ? "Envoi…" : "Enregistrer la couverture"}</Button> : null}
         </Card>
       ) : null}
 
@@ -322,7 +327,7 @@ export function EmployeeFilePage() {
               <>
                 <Field label="Groupe sanguin"><Input value={medical.bloodType} disabled={!canEdit} onChange={(e) => setMedical({ ...medical, bloodType: e.target.value })} /></Field>
                 <Field label="Notes médicales"><Textarea value={medical.medicalNotes} disabled={!canEdit} onChange={(e) => setMedical({ ...medical, medicalNotes: e.target.value })} /></Field>
-                {canEdit ? <Button onClick={saveMedical} disabled={saving}>{saving ? "Envoi…" : "Enregistrer le dossier"}</Button> : null}
+                {canEdit ? <Button onClick={() => saveMedical()} loading={saving} disabled={saving}>{saving ? "Envoi…" : "Enregistrer le dossier"}</Button> : null}
               </>
             ) : (
               <p className="text-sm text-[var(--role-muted)]">{tr("Le dossier médical est réservé aux personnes autorisées.")}</p>
@@ -339,7 +344,7 @@ export function EmployeeFilePage() {
                 </label>
               ) : null}
             </div>
-            <DocumentList docs={medicalDocs} empty="Aucune pièce médicale" />
+            {documents.isLoading ? <Spinner variant="rows" /> : <DocumentList docs={medicalDocs} empty="Aucune pièce médicale" />}
           </Card>
         </div>
       ) : null}
@@ -357,7 +362,7 @@ export function EmployeeFilePage() {
               </Field>
             ) : null}
           </div>
-          {payslips.data?.content.length ? (
+          {payslips.isLoading ? <Spinner variant="rows" /> : payslips.data?.content.length ? (
             <ul className="space-y-3">
               {payslips.data.content.map((slip) => (
                 <li key={idOf(slip)} className="rounded-xl border border-[var(--role-line)] p-3 text-sm">
@@ -370,7 +375,7 @@ export function EmployeeFilePage() {
                   <p className="text-[var(--role-muted)]">Le virement reprend ce net.</p>
                   {text(slip.transferReference) ? <p>Réf. {text(slip.transferReference)} · {text(slip.transferDate)}</p> : null}
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => downloadNamed(`/payslips/${idOf(slip)}/pdf`, `bulletin-${text(slip.period)}.pdf`).catch((e: Error) => toast.error(e.message))}>
+                    <Button size="sm" variant="outline" disabled={Boolean(paying)} onClick={() => downloadNamed(`/payslips/${idOf(slip)}/pdf`, `bulletin-${text(slip.period)}.pdf`).catch((e: Error) => toast.error(e.message))}>
                       <Download className="h-4 w-4" />
                       Bulletin PDF
                     </Button>
@@ -379,7 +384,7 @@ export function EmployeeFilePage() {
                       Ordre de virement
                     </Button>
                     {canPay && text(slip.transferStatus) !== "PAID" ? (
-                      <Button size="sm" onClick={() => markPaid(String(idOf(slip)))}>Marquer viré</Button>
+                      <Button size="sm" loading={paying === String(idOf(slip))} disabled={Boolean(paying)} onClick={() => markPaid(String(idOf(slip)))}>Marquer viré</Button>
                     ) : null}
                   </div>
                 </li>
@@ -406,21 +411,21 @@ export function EmployeeFilePage() {
           {canGenerate ? (
             <div className="flex flex-wrap gap-2">
               {GENERATED.map((item) => (
-                <Button key={item.type} size="sm" variant="outline" disabled={generating === item.type} onClick={() => generate(item.type)}>
+                <Button key={item.type} size="sm" variant="outline" loading={generating === item.type} disabled={Boolean(generating)} onClick={() => generate(item.type)}>
                   <FilePlus2 className="h-4 w-4" />
                   {generating === item.type ? "Envoi…" : item.label}
                 </Button>
               ))}
             </div>
           ) : null}
-          <DocumentList docs={otherDocs} empty="Aucun document" />
+          {documents.isLoading ? <Spinner variant="rows" /> : <DocumentList docs={otherDocs} empty="Aucun document" />}
         </Card>
       ) : null}
 
       {tab === "leave" ? (
         <Card>
           <h2 className="mb-3 font-semibold">{tr("Congés")}</h2>
-          {balances.data?.content.length ? (
+          {balances.isLoading ? <Spinner variant="rows" /> : balances.data?.content.length ? (
             <ul className="space-y-2 text-sm">
               {balances.data.content.map((balance) => (
                 <li key={idOf(balance)}>

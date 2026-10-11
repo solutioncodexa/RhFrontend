@@ -68,26 +68,28 @@ export function ConfirmDialog({
   onClose,
   onConfirm,
   danger,
+  pending,
 }: {
   open: boolean;
   title: string;
   message: string;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<unknown>;
   danger?: boolean;
+  pending?: boolean;
 }) {
   const { tr } = useI18n();
   return (
     <Modal
       open={open}
       title={title}
-      onClose={onClose}
+      onClose={pending ? () => undefined : onClose}
       footer={
         <>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={pending}>
             Annuler
           </Button>
-          <Button variant={danger ? "danger" : "primary"} onClick={onConfirm}>
+          <Button variant={danger ? "danger" : "primary"} loading={pending} disabled={pending} onClick={() => onConfirm()}>
             Confirmer
           </Button>
         </>

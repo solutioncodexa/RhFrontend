@@ -125,9 +125,11 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {q.isLoading ? <Spinner /> : null}
+      {q.isLoading ? <Spinner variant="dashboard" /> : null}
       {q.isError ? <ErrorState message={(q.error as Error).message} onRetry={() => q.refetch()} /> : null}
 
+      {q.data ? (
+      <>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <CountStat delay={40} label={scope === "team" ? "Équipe" : "Effectif"} amount={headcount} hint={`${n(d.activeEmployees)} actif${n(d.activeEmployees) > 1 ? "s" : ""}`} icon={<Users className="h-5 w-5" />} to="/app/employees" />
         <CountStat delay={90} label="Absents aujourd’hui" amount={n(d.absentToday)} icon={<UserRound className="h-5 w-5" />} to="/app/attendance" />
@@ -227,6 +229,8 @@ export function DashboardPage() {
           </ul>
         </Card>
       </div>
+      </>
+      ) : null}
     </div>
   );
 }

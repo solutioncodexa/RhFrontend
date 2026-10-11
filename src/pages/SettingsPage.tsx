@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { apiFetch, uploadImage } from "@/lib/api";
 import { ImageWell } from "@/components/ImageWell";
 import { asRecord } from "@/lib/utils";
 import { MOROCCAN_CITIES } from "@/lib/types";
 import { isEmail, isIce, isMaPhone } from "@/lib/validate";
-import { Button, Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
+import { Button, Card, Field, Input, PageHeader, Spinner, Textarea } from "@/components/ui";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { HolidaysPage, LeaveTypesPage } from "./CatalogPages";
 import { useI18n } from "@/lib/i18n";
@@ -89,6 +89,9 @@ export function SettingsPage() {
   return (
     <div className="space-y-8">
       <PageHeader title="Paramètres société" subtitle="Devise MAD · fuseau Africa/Casablanca" />
+      {settings.isLoading ? <Spinner variant="form" /> : null}
+      {settings.data ? (
+      <>
       <Card>
         <h2 className="mb-4 font-semibold">{tr("Identité")}</h2>
         <div className="mb-4">
@@ -128,7 +131,7 @@ export function SettingsPage() {
           {f("sector", "Secteur")}
           {f("currency", "Devise")}
         </div>
-        <Button className="mt-4" onClick={() => save.mutate()}>
+        <Button className="mt-4" loading={save.isPending} disabled={save.isPending} onClick={() => save.mutateAsync()}>
           Enregistrer
         </Button>
       </Card>
@@ -165,7 +168,7 @@ export function SettingsPage() {
             />
           </Field>
         </div>
-        <Button className="mt-4" variant="outline" onClick={() => save.mutate()}>
+        <Button className="mt-4" variant="outline" loading={save.isPending} disabled={save.isPending} onClick={() => save.mutateAsync()}>
           Enregistrer WhatsApp
         </Button>
       </Card>
@@ -179,10 +182,12 @@ export function SettingsPage() {
           {f("mutualEmployeeRate", "Mutuelle salarié")}
           {f("mutualEmployerRate", "Mutuelle employeur")}
         </div>
-        <Button className="mt-4" variant="outline" onClick={() => save.mutate()}>
+        <Button className="mt-4" variant="outline" loading={save.isPending} disabled={save.isPending} onClick={() => save.mutateAsync()}>
           Enregistrer
         </Button>
       </Card>
+      </>
+      ) : null}
 
       <HolidaysPage />
       <LeaveTypesPage />

@@ -60,7 +60,17 @@ createRoot(document.getElementById("root")!).render(
             <UnauthorizedBridge />
             <ScrollToTop />
             <App />
-            <Toaster richColors position="top-right" closeButton duration={3500} />
+            <Toaster
+              position="top-right"
+              closeButton
+              expand
+              duration={3800}
+              offset={16}
+              gap={10}
+              toastOptions={{
+                className: "rh-toast",
+              }}
+            />
           </AuthProvider>
         </I18nProvider>
       </BrowserRouter>

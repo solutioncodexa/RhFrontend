@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { createResource, deleteResource, listResource, patchResource } from "@/lib/api";
 import { asRecord, idOf } from "@/lib/utils";
 import { Badge, Button, Card, EmptyState, ErrorState, Field, Input, PageHeader, Spinner, statusTone } from "@/components/ui";
@@ -91,7 +91,7 @@ export function PlatformPage() {
         subtitle="SUPER_ADMIN — isolation des sociétés, plans Essentiel / Pro / Entreprise"
         actions={<Button onClick={() => setOpen(true)}>Nouvelle société</Button>}
       />
-      {tenants.isLoading ? <Spinner /> : null}
+      {tenants.isLoading ? <Spinner variant="cards" /> : null}
       {tenants.isError ? <ErrorState message={(tenants.error as Error).message} onRetry={() => tenants.refetch()} /> : null}
       {tenants.data?.content.length === 0 ? <EmptyState title="Aucune société" /> : null}
       <div className="grid gap-3 md:grid-cols-2">
@@ -116,7 +116,9 @@ export function PlatformPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => toggle.mutate({ id: idOf(row), active: row.active === false })}
+                  loading={toggle.isPending}
+                  disabled={toggle.isPending || remove.isPending}
+                  onClick={() => toggle.mutateAsync({ id: idOf(row), active: row.active === false })}
                 >
                   {row.active === false ? "Activer" : "Désactiver"}
                 </Button>
@@ -126,9 +128,11 @@ export function PlatformPage() {
                 <Button
                   size="sm"
                   variant="outline"
+                  disabled={remove.isPending || toggle.isPending}
+                  loading={remove.isPending}
                   onClick={() => {
                     if (window.confirm("Supprimer cette société et ses données ?")) {
-                      remove.mutate(idOf(row));
+                      return remove.mutateAsync(idOf(row));
                     }
                   }}
                 >
@@ -143,7 +147,7 @@ export function PlatformPage() {
         open={open}
         title="Créer une société"
         onClose={() => setOpen(false)}
-        footer={<Button onClick={() => create.mutate()}>Créer</Button>}
+        footer={<Button loading={create.isPending} disabled={create.isPending} onClick={() => create.mutateAsync()}>Créer</Button>}
       >
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Slug">
@@ -192,7 +196,7 @@ export function PlatformPage() {
         open={Boolean(payId)}
         title="Enregistrer un virement"
         onClose={() => setPayId(null)}
-        footer={<Button onClick={() => payment.mutate()}>Enregistrer</Button>}
+        footer={<Button loading={payment.isPending} disabled={payment.isPending} onClick={() => payment.mutateAsync()}>Enregistrer</Button>}
       >
         <div className="grid gap-3">
           <Field label="Montant MAD">

@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { homeForUser, useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { DEMO_ACCOUNTS } from "@/lib/types";
+import { toast } from "@/lib/toast";
 import { createResource } from "@/lib/api";
 import { Button, Field, Input } from "@/components/ui";
 import { fieldError, isEmail, isIce, isPassword } from "@/lib/validate";
@@ -102,7 +103,7 @@ export function LoginPage() {
           {t("rememberMe")}
         </label>
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" loading={busy} disabled={busy}>
           {busy ? t("signingIn") : t("signIn")}
         </Button>
       </form>
@@ -195,7 +196,7 @@ export function RegisterPage() {
         <Field label="Mot de passe" error={errors.password} hint="8 caractères min., lettre + chiffre">
           <Input invalid={Boolean(errors.password)} type="password" required value={form.password} onChange={(e) => set("password", e.target.value)} />
         </Field>
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" loading={busy} disabled={busy}>
           Créer ma société
         </Button>
       </form>
@@ -206,18 +207,23 @@ export function RegisterPage() {
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
     if (!isEmail(email)) {
       toast.error("E-mail invalide.");
       return;
     }
+    setBusy(true);
     try {
       await createResource("/auth/forgot-password", { email });
       setDone(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Impossible d’envoyer le lien");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -230,7 +236,7 @@ export function ForgotPasswordPage() {
           <Field label="E-mail">
             <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
-          <Button type="submit">Envoyer le lien</Button>
+          <Button type="submit" loading={busy} disabled={busy}>Envoyer le lien</Button>
         </form>
       )}
     </AuthFrame>
@@ -244,9 +250,11 @@ export function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
     if (!token) {
       setError("Lien incomplet. Demandez un nouvel e-mail.");
       return;
@@ -256,12 +264,15 @@ export function ResetPasswordPage() {
       return;
     }
     setError(null);
+    setBusy(true);
     try {
       await createResource("/auth/reset-password", { token, password });
       setDone(true);
       setTimeout(() => navigate("/login"), 1200);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Lien invalide");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -274,7 +285,7 @@ export function ResetPasswordPage() {
           <Field label="Nouveau mot de passe" error={error} hint="8 caractères min., lettre + chiffre">
             <Input invalid={Boolean(error)} type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
-          <Button type="submit" disabled={!token}>Enregistrer</Button>
+          <Button type="submit" loading={busy} disabled={!token || busy}>Enregistrer</Button>
         </form>
       )}
     </AuthFrame>

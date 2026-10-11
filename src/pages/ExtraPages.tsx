@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { ResourcePage } from "@/components/ResourcePage";
-import { Button, Card, Field, Input, PageHeader } from "@/components/ui";
+import { Button, Card, Field, Input, PageHeader, Spinner } from "@/components/ui";
 import { apiFetch, downloadNamed } from "@/lib/api";
 import { asRecord, moneyMAD } from "@/lib/utils";
 import { hasPermission } from "@/lib/types";
@@ -211,7 +211,7 @@ export function PayrollToolsPage() {
           <Field label="Net souhaité (MAD)">
             <Input type="number" value={net} onChange={(e) => setNet(e.target.value)} />
           </Field>
-          <Button className="mt-3" onClick={() => sim.mutate()} disabled={sim.isPending}>Simuler</Button>
+          <Button className="mt-3" onClick={() => sim.mutateAsync()} loading={sim.isPending} disabled={sim.isPending}>Simuler</Button>
           {sim.data ? (
             <p className="mt-3 text-sm">
               Brut {moneyMAD(simData.suggestedGross)} · base {moneyMAD(simData.suggestedBase)} · IR {moneyMAD(simData.ir)}
@@ -223,7 +223,7 @@ export function PayrollToolsPage() {
           <Field label="Id employé">
             <Input value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} />
           </Field>
-          <Button className="mt-3" onClick={() => stc.mutate()} disabled={!employeeId || stc.isPending}>Calculer</Button>
+          <Button className="mt-3" onClick={() => stc.mutateAsync()} loading={stc.isPending} disabled={!employeeId || stc.isPending}>Calculer</Button>
           {stc.data ? (
             <p className="mt-3 text-sm">Total {moneyMAD(stcData.total)} (net {moneyMAD(stcData.lastNet)} + congés {moneyMAD(stcData.leavePay)})</p>
           ) : null}
@@ -234,6 +234,7 @@ export function PayrollToolsPage() {
         <Field label="Année">
           <Input type="number" value={year} onChange={(e) => setYear(e.target.value)} />
         </Field>
+        {ir.isLoading ? <div className="mt-3"><Spinner variant="rows" rows={4} /></div> : null}
         <div className="mt-3 overflow-x-auto text-sm">
           {(ir.data ?? []).map((row) => {
             const r = asRecord(row);
@@ -285,6 +286,7 @@ export function CareerPage() {
       <Field label="Société (slug)">
         <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
       </Field>
+      {jobs.isLoading ? <Spinner variant="cards" /> : null}
       {list.map((job) => (
         <Card key={String(job.id)}>
           <h3 className="font-bold">{String(job.title)}</h3>
@@ -306,7 +308,7 @@ export function CareerPage() {
         <Field label="CV (texte)">
           <textarea className="control-field min-h-28 w-full" value={form.cvText} onChange={(e) => setForm({ ...form, cvText: e.target.value })} />
         </Field>
-        <Button className="mt-3" onClick={() => apply.mutate(form)} disabled={apply.isPending}>Envoyer</Button>
+        <Button className="mt-3" onClick={() => apply.mutateAsync(form)} loading={apply.isPending} disabled={apply.isPending}>Envoyer</Button>
       </Card>
     </div>
   );

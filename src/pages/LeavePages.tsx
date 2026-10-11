@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { apiFetch, createResource, downloadNamed, listResource } from "@/lib/api";
 import { Download } from "lucide-react";
 import { asRecord, formatDate, fullName, idOf, scrollContentTop } from "@/lib/utils";
-import { Badge, Button, ErrorState, Field, Input, PageHeader, Spinner, Textarea, statusTone } from "@/components/ui";
+import { actionLock, Badge, Button, ErrorState, Field, Input, PageHeader, Spinner, Textarea, statusTone } from "@/components/ui";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { Modal } from "@/components/Modal";
 import { ColumnFilter } from "@/components/ColumnFilter";
@@ -352,24 +352,24 @@ export function LeaveRequestsPage() {
                       ) : null}
                       {canApprove && String(row.status) === "PENDING" ? (
                         <>
-                          <Button size="sm" onClick={() => decide.mutate({ id: idOf(row), action: "approve" })}>
+                          <Button size="sm" {...actionLock(decide.isPending, decide.variables, idOf(row))} onClick={() => decide.mutateAsync({ id: idOf(row), action: "approve" })}>
                             {admin ? "Approuver" : "Valider"}
                           </Button>
-                          <Button size="sm" variant="danger" onClick={() => setRejecting(row)}>
+                          <Button size="sm" variant="danger" disabled={decide.isPending} onClick={() => setRejecting(row)}>
                             Refuser
                           </Button>
                         </>
                       ) : admin && String(row.status) === "MANAGER_APPROVED" ? (
                         <>
-                          <Button size="sm" onClick={() => decide.mutate({ id: idOf(row), action: "approve" })}>
+                          <Button size="sm" {...actionLock(decide.isPending, decide.variables, idOf(row))} onClick={() => decide.mutateAsync({ id: idOf(row), action: "approve" })}>
                             Approuver
                           </Button>
-                          <Button size="sm" variant="danger" onClick={() => setRejecting(row)}>
+                          <Button size="sm" variant="danger" disabled={decide.isPending} onClick={() => setRejecting(row)}>
                             Refuser
                           </Button>
                         </>
                       ) : canRequest && (String(row.status) === "PENDING" || String(row.status) === "APPROVED") ? (
-                        <Button size="sm" variant="outline" onClick={() => cancel.mutate(idOf(row))}>
+                        <Button size="sm" variant="outline" {...actionLock(cancel.isPending, cancel.variables, idOf(row))} onClick={() => cancel.mutateAsync(idOf(row))}>
                           Annuler
                         </Button>
                       ) : null}
@@ -419,8 +419,10 @@ export function LeaveRequestsPage() {
                   toast.error(Object.values(next)[0]);
                   return;
                 }
-                create.mutate();
+                return create.mutateAsync();
               }}
+              loading={create.isPending}
+              disabled={create.isPending}
             >
               Envoyer
             </Button>
@@ -486,7 +488,9 @@ export function LeaveRequestsPage() {
               </Button>
               <Button
                 variant="danger"
-                onClick={() => decide.mutate({ id: idOf(rejecting), action: "reject", comment: reason })}
+                loading={decide.isPending}
+                disabled={decide.isPending}
+                onClick={() => decide.mutateAsync({ id: idOf(rejecting), action: "reject", comment: reason })}
               >
                 Refuser
               </Button>
@@ -543,6 +547,8 @@ export function LeaveCalendarPage() {
           </div>
         }
       />
+      {q.isLoading ? <Spinner variant="calendar" /> : (
+      <>
       <p className="mb-4 font-semibold capitalize">{format(cursor, "MMMM yyyy", { locale: fr })}</p>
       <div className="grid grid-cols-7 gap-2">
         {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
@@ -567,6 +573,8 @@ export function LeaveCalendarPage() {
           );
         })}
       </div>
+      </>
+      )}
     </div>
   );
 }

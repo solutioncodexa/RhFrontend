@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Search } from "lucide-react";
 import { apiFetch, toQuery } from "@/lib/api";
 import { asRecord, fullName } from "@/lib/utils";
-import { Input } from "./ui";
+import { Input, Spinner } from "./ui";
 import { useI18n } from "@/lib/i18n";
 
 type Hit = Record<string, unknown> & { type?: string; href?: string };
@@ -90,7 +90,7 @@ export function GlobalSearch() {
           className="fixed z-[90] overflow-hidden rounded-xl border border-indigo-100 bg-white shadow-xl"
           style={{ top: box.top, left: box.left, width: box.width }}
         >
-          {search.isLoading ? <p className="px-3 py-3 text-sm text-indigo-500">{tr("Recherche…")}</p> : null}
+          {search.isLoading ? <div className="px-3 py-3"><Spinner variant="rows" rows={3} /></div> : null}
           {search.data?.length === 0 ? (
             <p className="px-3 py-3 text-sm text-indigo-500">{tr("Aucun résultat")}</p>
           ) : null}

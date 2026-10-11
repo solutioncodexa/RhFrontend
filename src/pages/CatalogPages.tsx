@@ -4,10 +4,10 @@ import { hasPermission, normalizeRole } from "@/lib/types";
 import { useAuth } from "@/lib/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { apiFetch, listResource, updateResource } from "@/lib/api";
 import { asRecord, fullName, idOf } from "@/lib/utils";
-import { Button, Field, Input } from "@/components/ui";
+import { actionLock, Button, Field, Input } from "@/components/ui";
 import { Modal } from "@/components/Modal";
 import { SearchableSelect } from "@/components/SearchableSelect";
 
@@ -247,7 +247,7 @@ export function AttendancePage({ absenceOnly = false, own = false }: { absenceOn
             <p className="font-semibold">Pointer ma journée</p>
             <p className="text-sm text-indigo-700">Le premier appui enregistre l’arrivée, le second le départ. Le GPS est envoyé si l’établissement a une zone.</p>
           </div>
-          <Button onClick={() => clock.mutate()} disabled={clock.isPending}>Pointer</Button>
+          <Button onClick={() => clock.mutateAsync()} loading={clock.isPending} disabled={clock.isPending}>Pointer</Button>
         </div>
       ) : null}
       <ResourcePage
@@ -409,16 +409,18 @@ export function DocumentsPage() {
           const own = user?.employeeId != null && String(row.employeeId ?? asRecord(row.employee).id ?? "") === String(user.employeeId);
           if (employee) {
             if (!own || (category !== "CONTRACT" && category !== "ADMIN")) return null;
+            const lock = actionLock(sign.isPending, sign.variables, idOf(row));
             return (
-              <Button size="sm" variant="outline" onClick={() => sign.mutate(idOf(row))}>
+              <Button size="sm" variant="outline" disabled={lock.disabled} loading={lock.loading} onClick={() => sign.mutateAsync(idOf(row))}>
                 Accuser réception
               </Button>
             );
           }
           if (!canSign) return null;
           if (category === "CIN" || category === "MEDICAL" || category === "DIPLOMA" || category === "PAYSLIP") return null;
+          const lock = actionLock(sign.isPending, sign.variables, idOf(row));
           return (
-            <Button size="sm" variant="outline" onClick={() => sign.mutate(idOf(row))}>
+            <Button size="sm" variant="outline" disabled={lock.disabled} loading={lock.loading} onClick={() => sign.mutateAsync(idOf(row))}>
               Signer
             </Button>
           );
@@ -496,13 +498,14 @@ export function RequestsPage() {
         extraActions: (row) => {
           const status = String(row.status);
           if (!canProcess) return null;
+          const lock = actionLock(process.isPending, process.variables, idOf(row));
           if (admin && (status === "PENDING" || status === "MANAGER_APPROVED")) {
             return (
               <div className="flex gap-1">
-                <Button size="sm" onClick={() => process.mutate({ id: idOf(row), action: "complete" })}>
+                <Button size="sm" disabled={lock.disabled} loading={lock.loading} onClick={() => process.mutateAsync({ id: idOf(row), action: "complete" })}>
                   Émettre
                 </Button>
-                <Button size="sm" variant="danger" onClick={() => process.mutate({ id: idOf(row), action: "reject" })}>
+                <Button size="sm" variant="danger" disabled={lock.disabled} onClick={() => process.mutateAsync({ id: idOf(row), action: "reject" })}>
                   Refuser
                 </Button>
               </div>
@@ -511,10 +514,10 @@ export function RequestsPage() {
           if (!admin && status === "PENDING") {
             return (
               <div className="flex gap-1">
-                <Button size="sm" onClick={() => process.mutate({ id: idOf(row), action: "complete" })}>
+                <Button size="sm" disabled={lock.disabled} loading={lock.loading} onClick={() => process.mutateAsync({ id: idOf(row), action: "complete" })}>
                   Valider
                 </Button>
-                <Button size="sm" variant="danger" onClick={() => process.mutate({ id: idOf(row), action: "reject" })}>
+                <Button size="sm" variant="danger" disabled={lock.disabled} onClick={() => process.mutateAsync({ id: idOf(row), action: "reject" })}>
                   Refuser
                 </Button>
               </div>
@@ -608,13 +611,13 @@ export function NotificationsPage() {
         searchPlaceholder: "Message",
         readOnly: true,
         headerActions: (
-          <Button size="sm" variant="outline" onClick={() => markAll.mutate()}>
+          <Button size="sm" variant="outline" loading={markAll.isPending} disabled={markAll.isPending} onClick={() => markAll.mutateAsync()}>
             Tout lire
           </Button>
         ),
         extraActions: (row) =>
           row.read === true || row.read === "true" ? null : (
-            <Button size="sm" variant="ghost" onClick={() => markOne.mutate(idOf(row))}>
+            <Button size="sm" variant="ghost" {...actionLock(markOne.isPending, markOne.variables, idOf(row))} onClick={() => markOne.mutateAsync(idOf(row))}>
               Marquer lu
             </Button>
           ),
@@ -659,13 +662,14 @@ export function ExpensesPage() {
         extraActions: (row) => {
           const own = user?.employeeId != null && String(row.employeeId ?? "") === String(user.employeeId);
           if (!canApprove || own) return null;
+          const lock = actionLock(decide.isPending, decide.variables, idOf(row));
           if (String(row.status) === "PENDING") {
             return (
               <div className="flex gap-1">
-                <Button size="sm" onClick={() => decide.mutate({ id: idOf(row), status: "APPROVED" })}>
+                <Button size="sm" disabled={lock.disabled} loading={lock.loading} onClick={() => decide.mutateAsync({ id: idOf(row), status: "APPROVED" })}>
                   Approuver
                 </Button>
-                <Button size="sm" variant="danger" onClick={() => decide.mutate({ id: idOf(row), status: "REJECTED" })}>
+                <Button size="sm" variant="danger" disabled={lock.disabled} onClick={() => decide.mutateAsync({ id: idOf(row), status: "REJECTED" })}>
                   Refuser
                 </Button>
               </div>
@@ -673,7 +677,7 @@ export function ExpensesPage() {
           }
           if (admin && String(row.status) === "APPROVED") {
             return (
-              <Button size="sm" variant="outline" onClick={() => decide.mutate({ id: idOf(row), status: "REIMBURSED" })}>
+              <Button size="sm" variant="outline" disabled={lock.disabled} loading={lock.loading} onClick={() => decide.mutateAsync({ id: idOf(row), status: "REIMBURSED" })}>
                 Rembourser
               </Button>
             );
@@ -738,12 +742,13 @@ export function TripsPage() {
         ],
         extraActions: (row) => {
           const own = user?.employeeId != null && String(row.employeeId ?? "") === String(user.employeeId);
+          const lock = actionLock(decide.isPending, decide.variables, idOf(row));
           return canApprove && !own && String(row.status) === "PENDING" ? (
             <div className="flex gap-1">
-              <Button size="sm" onClick={() => decide.mutate({ id: idOf(row), status: "APPROVED" })}>
+              <Button size="sm" disabled={lock.disabled} loading={lock.loading} onClick={() => decide.mutateAsync({ id: idOf(row), status: "APPROVED" })}>
                 Approuver
               </Button>
-              <Button size="sm" variant="danger" onClick={() => decide.mutate({ id: idOf(row), status: "REJECTED" })}>
+              <Button size="sm" variant="danger" disabled={lock.disabled} onClick={() => decide.mutateAsync({ id: idOf(row), status: "REJECTED" })}>
                 Refuser
               </Button>
             </div>
@@ -798,7 +803,7 @@ function ProgressAction({ id, value }: { id: string; value: string }) {
         footer={
           <>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button disabled={save.isPending} onClick={() => save.mutate()}>Enregistrer</Button>
+            <Button loading={save.isPending} disabled={save.isPending} onClick={() => save.mutateAsync()}>Enregistrer</Button>
           </>
         }
       >
@@ -838,11 +843,12 @@ export function ReviewsPage() {
         extraActions: (row) => {
           const mine = user?.employeeId != null && String(row.employeeId ?? "") === String(user.employeeId);
           const status = String(row.status ?? "");
+          const lock = actionLock(decide.isPending, decide.variables, idOf(row));
           if (canManage && !mine && status === "DRAFT") {
-            return <Button size="sm" onClick={() => decide.mutate({ id: idOf(row), status: "SHARED" })}>Partager</Button>;
+            return <Button size="sm" disabled={lock.disabled} loading={lock.loading} onClick={() => decide.mutateAsync({ id: idOf(row), status: "SHARED" })}>Partager</Button>;
           }
           if (mine && status === "SHARED") {
-            return <Button size="sm" variant="outline" onClick={() => decide.mutate({ id: idOf(row), status: "ACKNOWLEDGED" })}>Accuser réception</Button>;
+            return <Button size="sm" variant="outline" disabled={lock.disabled} loading={lock.loading} onClick={() => decide.mutateAsync({ id: idOf(row), status: "ACKNOWLEDGED" })}>Accuser réception</Button>;
           }
           return null;
         },
@@ -932,10 +938,10 @@ export function JobsPage() {
         extraActions: (row) => {
           const status = String(row.status ?? "");
           if (status === "OPEN") {
-            return <Button size="sm" variant="outline" onClick={() => close.mutate({ id: idOf(row), status: "CLOSED" })}>Fermer</Button>;
+            return <Button size="sm" variant="outline" {...actionLock(close.isPending, close.variables, idOf(row))} onClick={() => close.mutateAsync({ id: idOf(row), status: "CLOSED" })}>Fermer</Button>;
           }
           if (status === "CLOSED") {
-            return <Button size="sm" onClick={() => close.mutate({ id: idOf(row), status: "OPEN" })}>Rouvrir</Button>;
+            return <Button size="sm" {...actionLock(close.isPending, close.variables, idOf(row))} onClick={() => close.mutateAsync({ id: idOf(row), status: "OPEN" })}>Rouvrir</Button>;
           }
           return null;
         },
@@ -989,16 +995,16 @@ export function CandidatesPage() {
           if (status === "NEW") {
             return (
               <div className="flex gap-1">
-                <Button size="sm" onClick={() => move.mutate({ id: idOf(row), status: "INTERVIEW" })}>Convoquer</Button>
-                <Button size="sm" variant="danger" onClick={() => move.mutate({ id: idOf(row), status: "REJECTED" })}>Refuser</Button>
+                <Button size="sm" {...actionLock(move.isPending, move.variables, idOf(row))} onClick={() => move.mutateAsync({ id: idOf(row), status: "INTERVIEW" })}>Convoquer</Button>
+                <Button size="sm" variant="danger" disabled={move.isPending} onClick={() => move.mutateAsync({ id: idOf(row), status: "REJECTED" })}>Refuser</Button>
               </div>
             );
           }
           if (status === "INTERVIEW") {
             return (
               <div className="flex gap-1">
-                <Button size="sm" onClick={() => move.mutate({ id: idOf(row), status: "HIRED" })}>Recruter</Button>
-                <Button size="sm" variant="danger" onClick={() => move.mutate({ id: idOf(row), status: "REJECTED" })}>Refuser</Button>
+                <Button size="sm" {...actionLock(move.isPending, move.variables, idOf(row))} onClick={() => move.mutateAsync({ id: idOf(row), status: "HIRED" })}>Recruter</Button>
+                <Button size="sm" variant="danger" disabled={move.isPending} onClick={() => move.mutateAsync({ id: idOf(row), status: "REJECTED" })}>Refuser</Button>
               </div>
             );
           }
@@ -1084,7 +1090,7 @@ function ChecklistPage({ kind }: { kind: "onboarding" | "offboarding" }) {
             const mine = user?.employeeId != null && String(row.employeeId ?? "") === String(user.employeeId);
             if (!mine && !canEdit) return null;
             return (
-              <Button size="sm" onClick={() => done.mutate(idOf(row))}>
+              <Button size="sm" {...actionLock(done.isPending, done.variables, idOf(row))} onClick={() => done.mutateAsync(idOf(row))}>
                 Marquer fait
               </Button>
             );
@@ -1113,7 +1119,7 @@ function ChecklistPage({ kind }: { kind: "onboarding" | "offboarding" }) {
         footer={
           <>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button disabled={!employeeId || launch.isPending} onClick={() => launch.mutate()}>Ouvrir</Button>
+            <Button disabled={!employeeId || launch.isPending} loading={launch.isPending} onClick={() => launch.mutateAsync()}>Ouvrir</Button>
           </>
         }
       >
@@ -1232,7 +1238,7 @@ export function UsersPage() {
         open={Boolean(target)}
         title={`Droits — ${String(asRecord(target).email ?? "")}`}
         onClose={() => setTarget(null)}
-        footer={<Button onClick={() => savePerms.mutate()} disabled={savePerms.isPending}>Enregistrer</Button>}
+        footer={<Button onClick={() => savePerms.mutateAsync()} loading={savePerms.isPending} disabled={savePerms.isPending}>Enregistrer</Button>}
       >
         <div className="grid max-h-80 gap-1 overflow-y-auto text-sm">
           {V1_PERMISSIONS.map((code) => {
